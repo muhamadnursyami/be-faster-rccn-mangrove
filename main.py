@@ -77,6 +77,10 @@ def get_tanaman_by_label(label_name):
 def root():
     return {"message": "FastAPI backend for Mangrove Faster R-CNN ready!"}
 
+@app.get("/mangrove/get-data")
+def get_data():
+    return JSONResponse(content=tanaman_data)
+
 @app.post("/mangrove/detect")
 async def detect_image(file: UploadFile = File(...), threshold: float = 0.6):
     image_bytes = await file.read()
@@ -102,3 +106,9 @@ async def detect_image(file: UploadFile = File(...), threshold: float = 0.6):
             })
 
     return JSONResponse(content={"message": "success", "detections": results})
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=5001, reload=False)
+
