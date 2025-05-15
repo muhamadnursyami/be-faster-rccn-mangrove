@@ -5,8 +5,11 @@
 4. model.pth from training model
 
 ## Step Use
-1. git clone https://github.com/muhamadnursyami/be-mangrove-faster-rccn.git
+1. git clone https://github.com/muhamadnursyami/be-faster-rccn-mangrove
 2. install python your laptop and settings or configuration path python in enviroment variabel.
 3. pip install -r requirements.txt
 4. pip install python-multipart
 5. uvicorn main:app --reload
+
+## Noted
+Model tidak di upload karena penyimpananya besar
