@@ -10,12 +10,13 @@ import torch
 import json
 import numpy as np
 import io
+from fastapi.staticfiles import StaticFiles
 
 # =====================================
 # 🚀 INIT FASTAPI APP
 # =====================================
 app = FastAPI()
-
+app.mount("/gambar_mangrove", StaticFiles(directory="gambar_mangrove"), name="gambar_mangrove")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
