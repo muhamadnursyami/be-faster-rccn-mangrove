@@ -11,7 +11,8 @@ import json
 import numpy as np
 import io
 from fastapi.staticfiles import StaticFiles
-
+from torchvision.transforms import functional as F
+from torchvision.transforms import Resize
 # =====================================
 # 🚀 INIT FASTAPI APP
 # =====================================
@@ -87,7 +88,11 @@ async def detect_image(file: UploadFile = File(...), threshold: float = 0.6):
     image_bytes = await file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
-    image_tensor = F.to_tensor(image).unsqueeze(0).to(device)
+    # Resize ke 640x640 agar cocok dengan training model
+    image_resized = image.resize((640, 640))
+
+    # Konversi ke tensor
+    image_tensor = F.to_tensor(image_resized).unsqueeze(0).to(device)
 
     with torch.no_grad():
         outputs = model(image_tensor)[0]
@@ -97,6 +102,15 @@ async def detect_image(file: UploadFile = File(...), threshold: float = 0.6):
         if score >= threshold:
             class_name = COCO_CLASSES.get(label.item(), f"Class {label.item()}")
             x1, y1, x2, y2 = map(float, box.tolist())
+
+            # Skala bounding box dari 640x640 ke ukuran gambar asli
+            scale_x = image.width / 640
+            scale_y = image.height / 640
+            x1 *= scale_x
+            x2 *= scale_x
+            y1 *= scale_y
+            y2 *= scale_y
+
             data_tanaman = get_tanaman_by_label(class_name)
 
             results.append({
