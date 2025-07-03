@@ -1,3 +1,4 @@
+# Import libary
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -16,8 +17,11 @@ from torchvision.transforms import Resize
 # =====================================
 # 🚀 INIT FASTAPI APP
 # =====================================
+# memulai fast api
 app = FastAPI()
+# meng mount folder gambar mangrove kedalam url/ gambar_mangrove 
 app.mount("/gambar_mangrove", StaticFiles(directory="gambar_mangrove"), name="gambar_mangrove")
+# middlware untuk menangani cors
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -46,8 +50,10 @@ COCO_CLASSES = {
 # 🔧 LOAD MODEL
 # =====================================
 def load_model(weights_path, num_classes=10, device="cpu"):
+    # memuat model
     weights = FasterRCNN_ResNet50_FPN_Weights.COCO_V1
     model = fasterrcnn_resnet50_fpn(weights=weights)
+    # mengantikan nilai roi head box predictor sesuatu dengan kelas yang diinginkan
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
     model.load_state_dict(torch.load(weights_path, map_location=device))
@@ -63,9 +69,10 @@ device = "cpu"
 # =====================================
 # 🔍 LOAD JSON DATA
 # =====================================
+# membaca file datTanaman json
 with open("dataTanaman.json") as f:
     tanaman_data = json.load(f)
-
+# mnencari  berdasarkan label nama yang dihapus tanda  spasi dan -
 def get_tanaman_by_label(label_name):
     for data in tanaman_data:
         if label_name.lower().replace(" ", "-") in data["nama"].lower().replace(" ", "-"):
@@ -85,6 +92,7 @@ def get_data():
 
 @app.post("/mangrove/detect")
 async def detect_image(file: UploadFile = File(...), threshold: float = 0.6):
+    #membaca file gambar yang dikirim kan dan diconvert ke rgn
     image_bytes = await file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
@@ -98,8 +106,10 @@ async def detect_image(file: UploadFile = File(...), threshold: float = 0.6):
         outputs = model(image_tensor)[0]
 
     results = []
+    # proses data jika score besar dari threshold maka
     for box, label, score in zip(outputs["boxes"], outputs["labels"], outputs["scores"]):
         if score >= threshold:
+            # mengambil data label item
             class_name = COCO_CLASSES.get(label.item(), f"Class {label.item()}")
             x1, y1, x2, y2 = map(float, box.tolist())
 
@@ -112,7 +122,7 @@ async def detect_image(file: UploadFile = File(...), threshold: float = 0.6):
             y2 *= scale_y
 
             data_tanaman = get_tanaman_by_label(class_name)
-
+            # hasil respon json  prediksi 
             results.append({
                 "label": class_name,
                 "score": round(float(score), 4),
